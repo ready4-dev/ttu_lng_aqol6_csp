@@ -1,3 +1,6 @@
+# Program execution data
+Data/Real/*
+Data/Fake/*
 # History files
 .Rhistory
 .Rapp.history
