@@ -8,6 +8,7 @@ output:
       - '--lua-filter=../Filters/scholarly-metadata.lua'
       - '--lua-filter=../Filters/author-info-blocks.lua'
     toc: no
+date: "`r format(Sys.Date(),'%d %B %Y')`"
 params:
   eval_1L_lgl: True
   X: NULL
@@ -284,10 +285,15 @@ F1 <- authorData(F1)
 ```
 
 ## Specify study reporting metadata
-We create a `SpecificSynopsis` object that contains the fields necessary to render and share reports.
+We create a `TTUSynopsis` object that contains the fields necessary to render and share reports.
 
 ```{r}
 G <- metamorphose(F1)
+G <- TTUSynopsis(a_Ready4showPaths = G@a_Ready4showPaths,
+                 b_SpecificResults = G@b_SpecificResults,
+                 c_SpecificParameters = G@c_SpecificParameters,
+                 d_YouthvarsProfile = G@d_YouthvarsProfile,
+                 rmd_fl_nms_ls = G@rmd_fl_nms_ls)
 ```
 
 We add metadata relevant to the reports that we will be generating to these fields.
@@ -325,11 +331,6 @@ G <- G %>%
   renewSlot("correspondences_r3",
             old_nms_chr = c("PHQ9", "GAD7"),
             new_nms_chr = c("PHQ-9", "GAD-7")) 
-```
-
-Add details of the repository to which we will write copies of (non-confidential) study outputs. The below logic uses the same repository that stores our input data and only adds these details if real data is being used. You can ammend this section as appropriate (for example, if you wish to use a different repository [necessary if you don't have write permissions to `A`]).
-
-```{r}
 if(!is.na(path_to_data_1L_chr)){
     G <- G %>%
       renewSlot("e_Ready4useRepos",
@@ -338,13 +339,11 @@ if(!is.na(path_to_data_1L_chr)){
 }
 ```
 
-
-
 ## Describe and share models
 We now create a `TTUReports` object, that we can use to efficiently retrieve and apply programs that can summarise our study results.
 
 ```{r}
-H <- TTUReports(a_SpecificSynopsis = G)
+H <- TTUReports(a_TTUSynopsis = G)
 ```
 
 ### Author model catalogues
@@ -361,7 +360,7 @@ We share the catalogues that we created, uploading a copy to our study online re
 
 ```{r}
 shareSlot(H,
-          "a_SpecificSynopsis",
+          slot_nm_1L_chr = "a_TTUSynopsis",
           type_1L_chr = "Report",
           what_1L_chr = "Catalogue")
 ```
@@ -371,7 +370,7 @@ We share tables of coefficients and other meta-data about the models we have cre
 
 ```{r}
 shareSlot(H,
-          "a_SpecificSynopsis",
+          "a_TTUSynopsis",
           type_1L_chr = "Models",
           what_1L_chr = "ingredients")
 ```
@@ -381,12 +380,12 @@ We add some content about the manuscript we wish to author.
 
 ```{r}
 G <- procureSlot(H,
-                 "a_SpecificSynopsis") %>% 
+                 "a_TTUSynopsis") %>% 
   renewSlot("background_1L_chr",
-            "BACKGROUND TEXT GOES HERE") %>%
+            "Quality Adjusted Life Years (QALYs) are often used in economic evaluations, yet utility weights for deriving them are rarely directly measured in mental health services.") %>%
   renewSlot("coi_1L_chr", "None declared") %>%
   renewSlot("conclusion_1L_chr",
-            "CONCLUSION TEXT GOES HERE") %>%
+            "Adolescent AQoL-6D utility can be derived from a range of psychological distress, depression and anxiety measures. TTU algorithms estimated from cross-sectional data can approximate longitudinal change but may slightly bias QALY predictions.") %>%
   renewSlot("ethics_1L_chr", 
             paste0("The study was reviewed and granted approval by ",
                    ifelse(is.na(path_to_data_1L_chr),
@@ -409,7 +408,7 @@ G <- procureSlot(H,
                    "")
             ) 
 H <- renewSlot(H,
-               "a_SpecificSynopsis",
+               "a_TTUSynopsis",
                G)
 ```
 
@@ -417,9 +416,9 @@ We add arguments to help us create an abstract for the the manuscript.
 
 ```{r}
 H <- H %>%
-  renewSlot("a_SpecificSynopsis@abstract_args_ls",
+  renewSlot("a_TTUSynopsis@abstract_args_ls",
             manufactureSlot(H,
-                            "a_SpecificSynopsis",
+                            "a_TTUSynopsis",
                             what_1L_chr = "abstract_args_ls")) 
 ```
 
@@ -427,7 +426,7 @@ We create a summary of results that can be interpreted by the program that autho
 
 ```{r}
 H <- enhanceSlot(H, 
-                 "a_SpecificSynopsis",
+                 "a_TTUSynopsis",
                  depnt_var_nms_chr = c("AQoL-6D",
                                        "Adolescent AQoL Six Dimension"), 
                  with_1L_chr = "results_ls")
@@ -436,21 +435,10 @@ H <- enhanceSlot(H,
 We create and save the plots that will be used in the manuscript.
 
 ```{r}
-composite_1_plt <- depictSlot(H,
-                              "a_SpecificSynopsis",
-                              depnt_var_desc_1L_chr = "AQoL-6D",
-                              timepoint_old_nms_chr = procureSlot(H,
-                                                                  "a_SpecificSynopsis@d_YouthvarsProfile@timepoint_vals_chr"),
-                              timepoint_new_nms_chr = c("Baseline","Follow-up"),
-                              what_1L_chr = "composite_mdl",
-                              write_1L_lgl = T)
-```
-```{r}
-composite_2_plt <- depictSlot(H,
-                              slot_nm_1L_chr = "a_SpecificSynopsis",
-                              what_1L_chr = "composite_utl",
-                              write_1L_lgl = T)
-
+author(H,
+       depnt_var_desc_1L_chr = "AQoL-6D",
+       timepoint_new_nms_chr = c("Baseline","Follow-up"),
+       type_1L_chr = "Plots")
 ```
 
 We download a program for generating a template manuscript and run it to author a first draft of the manuscript.
@@ -458,23 +446,58 @@ We download a program for generating a template manuscript and run it to author 
 ```{r}
 author(H,
        download_tmpl_1L_lgl = T,
+       type_1L_chr = "Report",
        what_1L_chr = "Manuscript_Auto")
 ```
 
-We can now customise the template program so that it can generate the manuscript we plan on submitting. It is recommended that the updated manuscript generation program is saved in a new sub-directory, for example "Manuscript_Submission". Once we have done this (a step undertaken manually, not by this algorithm)  we can the following command to author the submission manuscript.
+We create the files we will be using for figures submitted to our target journal and also a table of all the dependency packages used in our analysis and reporting.
 
 ```{r}
-if(paste0(H@a_SpecificSynopsis@a_Ready4showPaths@outp_data_dir_1L_chr,
+author(H,
+       depnt_var_desc_1L_chr = "AQoL-6D",
+       timepoint_new_nms_chr = c("Baseline","Follow-up"),
+       type_1L_chr = "Plots",
+       what_1L_chr = "Manuscript_Submission")
+author(H,
+       type_1L_chr = "Dependencies",
+       what_1L_chr = "Manuscript_Submission")
+
+```
+
+We can now customise the template manuscript program so that it can generate the manuscript we plan on submitting. It is recommended that the updated manuscript generation program is saved in a new sub-directory, for example "Manuscript_Submission". Once we have done this (a step undertaken manually, not by this algorithm)  we can the following command to author the submission manuscript.
+
+```{r}
+if(paste0(H@a_TTUSynopsis@a_Ready4showPaths@outp_data_dir_1L_chr,
           "/",
-          H@a_SpecificSynopsis@a_Ready4showPaths@mkdn_data_dir_1L_chr,
+          H@a_TTUSynopsis@a_Ready4showPaths@mkdn_data_dir_1L_chr,
           "/Manuscript_Submission") %>% 
    dir.exists()){
-  author(H %>%
-           renewSlot("a_SpecificSynopsis@tables_in_body_lgl",
+  H <- H %>%
+           renewSlot("a_TTUSynopsis@tables_in_body_lgl",
                      F) %>%
-           renewSlot("a_SpecificSynopsis@figures_in_body_lgl",
-                     F),
+           renewSlot("a_TTUSynopsis@figures_in_body_lgl",
+                     F)
+  author(H,
+         download_tmpl_1L_lgl = F,
          what_1L_chr = "Manuscript_Submission")
+}
+```
+
+We now generate the Supplementary Information for the submission manuscript.
+
+```{r}
+if(paste0(H@a_TTUSynopsis@a_Ready4showPaths@outp_data_dir_1L_chr,
+          "/",
+          H@a_TTUSynopsis@a_Ready4showPaths@mkdn_data_dir_1L_chr,
+          "/Manuscript_Submission") %>% 
+   dir.exists()){
+  authorReport(H %>%
+                 renewSlot("a_TTUSynopsis@rmd_fl_nms_ls",
+                           ready4show::make_rmd_fl_nms_ls(pdf_fl_nm_1L_chr = "TA_PDF")) %>%
+                 procureSlot("a_TTUSynopsis"),
+               fl_nm_1L_chr = "Supplement",
+               #download_tmpl_1L_lgl = F,
+               what_1L_chr = "Manuscript_Submission")
 }
 ```
 
