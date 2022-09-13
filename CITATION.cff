@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-message: "Matthew Hamilton and Caroline Gao  (2022). Complete study program to reproduce all steps from data ingest through to results dissemination for a study to map mental health measures to AQoL-6D health utility. Zenodo. https://doi.org/10.5281/zenodo.6116077. Version 0.0.9.4"
+message: "Matthew Hamilton and Caroline Gao  (2022). Complete study program to reproduce all steps from data ingest through to results dissemination for a study to map mental health measures to AQoL-6D health utility. Zenodo. https://doi.org/10.5281/zenodo.6116077. Version 0.1"
 authors:
   - family-names: "Hamilton"
     given-names: "Matthew"
   - family-names: "Gao"
     given-names: "Caroline"
 title: "Complete study program to reproduce all steps from data ingest through to results dissemination for a study to map mental health measures to AQoL-6D health utility"
-version: 0.0.9.4
+version: 0.1
 doi: 10.5281/zenodo.6116077
 date-released: 2022-09-13
 url: "https://github.com/ready4-dev/ttu_lng_aqol6_csp"
